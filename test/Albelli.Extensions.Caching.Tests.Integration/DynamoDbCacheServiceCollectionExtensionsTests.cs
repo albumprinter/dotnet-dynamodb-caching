@@ -47,7 +47,7 @@ namespace Albelli.Extensions.Caching.Integration
             {
                 o.TableName = "test";
             });
-            serviceCollection.AddSingleton<IAmazonDynamoDB>(m => new Mock<AmazonDynamoDBClient>().Object);
+            serviceCollection.AddSingleton<IAmazonDynamoDB>(m => new Mock<IAmazonDynamoDB>().Object);
             var serviceProvider = serviceCollection.BuildServiceProvider();
             Assert.NotNull(serviceProvider.GetService(typeof(IDistributedCache)));
         }
@@ -59,7 +59,7 @@ namespace Albelli.Extensions.Caching.Integration
             serviceCollection.AddDynamoDbCache(o =>
             {
                 o.TableName = "test";
-                o.CustomDynamoDbClient = new Mock<AmazonDynamoDBClient>().Object;
+                o.CustomDynamoDbClient = new Mock<IAmazonDynamoDB>().Object;
             });
             var serviceProvider = serviceCollection.BuildServiceProvider();
             Assert.NotNull(serviceProvider.GetService(typeof(IDistributedCache)));
