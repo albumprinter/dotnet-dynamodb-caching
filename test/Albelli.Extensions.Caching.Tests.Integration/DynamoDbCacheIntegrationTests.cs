@@ -21,7 +21,7 @@ namespace Albelli.Extensions.Caching.Integration
         private readonly IDistributedCache _cache;
         public DynamoDbCacheIntegrationTests() => _cache = new DynamoDbCache(_options, _systemClock, _dynamoDb);
 
-        [Fact(Skip = "Local only.")]
+        [Fact(Skip = "Local only")]
         public async Task Should_Successfully_Create_And_Retrieve_Keys()
         {
             var dummyKey =  $"TestKey{Guid.NewGuid():N}";
@@ -31,7 +31,7 @@ namespace Albelli.Extensions.Caching.Integration
             Assert.Equal(dummyValue, result);
         }
 
-        [Fact(Skip = "Local only.")]        
+        [Fact(Skip = "Local only")]    
         public async Task Should_recalculate_sliding_expiration_properly()
         {
             var dummyKey =  $"TestKey{Guid.NewGuid():N}";
@@ -39,20 +39,20 @@ namespace Albelli.Extensions.Caching.Integration
             await _cache.SetStringAsync(dummyKey, dummyValue, new DistributedCacheEntryOptions()
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
-                SlidingExpiration = TimeSpan.FromSeconds(5)
+                SlidingExpiration = TimeSpan.FromSeconds(10)
             });
             for (var i = 0; i <= 5; i++)
             {
-                await Task.Delay(3000);
+                await Task.Delay(7000);
                 var result = await _cache.GetStringAsync(dummyKey);
                 Assert.Equal(dummyValue, result);
             }
-            await Task.Delay(7000);
+            await Task.Delay(25000);
             var finalResult = await _cache.GetStringAsync(dummyKey);
             Assert.Null(finalResult);
         }
         
-        [Fact(Skip = "Local only.")]
+        [Fact(Skip = "Local only")]
         public async Task Should_expire_after_five_seconds()
         {
             var dummyKey =  $"TestKey{Guid.NewGuid():N}";
@@ -68,7 +68,7 @@ namespace Albelli.Extensions.Caching.Integration
             Assert.Null(finalResult);
         }
 
-        [Fact(Skip = "Local only.")]
+        [Fact(Skip = "Local only")]
         public async Task Should_delete_the_key_properly()
         {
             var dummyKey =  $"TestKey{Guid.NewGuid():N}";

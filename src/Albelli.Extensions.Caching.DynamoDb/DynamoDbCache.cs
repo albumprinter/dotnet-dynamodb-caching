@@ -63,7 +63,7 @@ namespace Albelli.Extensions.Caching.DynamoDb
             {
                 var slidingExpiry = long.Parse(result.Item[_options.SlidingExpiryTimespanColumnName].N);
                 var currentTime = _systemClock.UtcNow.ToUnixTimeSeconds();
-                if (currentTtl - currentTime <= slidingExpiry / 2.0)
+                if (currentTtl - currentTime <= slidingExpiry / 2)
                 {
                     await RefreshAsync(key, token).ConfigureAwait(false);
                 }
@@ -95,34 +95,8 @@ namespace Albelli.Extensions.Caching.DynamoDb
                 options = new DistributedCacheEntryOptions()
                     {AbsoluteExpirationRelativeToNow = _options.DefaultDurationPolicy};
             }
-
-            var table = new Dictionary<string, AttributeValue>()
-            {
-                [_options.KeyColumnName] = new AttributeValue(key),
-                [_options.ValueColumnName] = new AttributeValue() {B = new MemoryStream(value)},
-            };
-            var slidingExpirationTicks = options.SlidingExpiration.HasValue
-                ? Convert.ToInt64(Math.Round(options.SlidingExpiration.Value.TotalSeconds))
-                : (long?) null;
-            var absoluteExpirationTimestamp =
-                GetAbsoluteExpirationUnixTimestamp(options.AbsoluteExpiration, options.AbsoluteExpirationRelativeToNow)
-                    ?.ToUnixTimeSeconds();
-            if (slidingExpirationTicks.HasValue)
-            {
-                table.Add(_options.SlidingExpiryTimespanColumnName,
-                    new AttributeValue() {N = slidingExpirationTicks.Value.ToString()});
-            }
-
-            if (absoluteExpirationTimestamp.HasValue)
-            {
-                table.Add(_options.AbsoluteExpiryUnixTimestampColumnName,
-                    new AttributeValue() {N = absoluteExpirationTimestamp.Value.ToString()});
-            }
-
-            table.Add(_options.TimeToLiveColumnName,
-                new AttributeValue()
-                    {N = GetInitialTtlTimestamp(slidingExpirationTicks, absoluteExpirationTimestamp).ToString()});
-            await _dynamoDb.PutItemAsync(_options.TableName, table, token).ConfigureAwait(false);
+            var dynamoDbCacheEntry = BuildDynamoDbCacheEntry(key, value, options);
+            await _dynamoDb.PutItemAsync(_options.TableName, dynamoDbCacheEntry, token).ConfigureAwait(false);
         }
 
         public void Refresh(string key)
@@ -180,6 +154,37 @@ namespace Albelli.Extensions.Caching.DynamoDb
                     token)
                 .ConfigureAwait(false);
         }
+        
+        private Dictionary<string, AttributeValue> BuildDynamoDbCacheEntry(string key, byte[] value,
+            DistributedCacheEntryOptions options)
+        {
+            var table = new Dictionary<string, AttributeValue>()
+            {
+                [_options.KeyColumnName] = new AttributeValue(key),
+                [_options.ValueColumnName] = new AttributeValue() {B = new MemoryStream(value)},
+            };
+            var slidingExpirationTicks = options.SlidingExpiration.HasValue
+                ? Convert.ToInt64(Math.Round(options.SlidingExpiration.Value.TotalSeconds))
+                : (long?) null;
+            var absoluteExpirationTimestamp =
+                GetAbsoluteExpirationUnixTimestamp(options.AbsoluteExpiration, options.AbsoluteExpirationRelativeToNow);
+            if (slidingExpirationTicks.HasValue)
+            {
+                table.Add(_options.SlidingExpiryTimespanColumnName,
+                    new AttributeValue() {N = slidingExpirationTicks.Value.ToString()});
+            }
+
+            if (absoluteExpirationTimestamp.HasValue)
+            {
+                table.Add(_options.AbsoluteExpiryUnixTimestampColumnName,
+                    new AttributeValue() {N = absoluteExpirationTimestamp.Value.ToString()});
+            }
+
+            table.Add(_options.TimeToLiveColumnName,
+                new AttributeValue()
+                    {N = GetInitialTtlTimestamp(slidingExpirationTicks, absoluteExpirationTimestamp).ToString()});
+            return table;
+        }
 
         private long GetInitialTtlTimestamp(long? slidingExpirationTicks, long? absoluteExpirationTimestamp)
         {
@@ -194,7 +199,7 @@ namespace Albelli.Extensions.Caching.DynamoDb
             }
         }
 
-        private DateTimeOffset? GetAbsoluteExpirationUnixTimestamp(DateTimeOffset? absoluteExpiration,
+        private long? GetAbsoluteExpirationUnixTimestamp(DateTimeOffset? absoluteExpiration,
             TimeSpan? relativeToNowAbsoluteExpiration)
         {
             DateTimeOffset? result = null;
@@ -213,7 +218,7 @@ namespace Albelli.Extensions.Caching.DynamoDb
                 result = _systemClock.UtcNow.Add(relativeToNowAbsoluteExpiration.Value);
             }
 
-            return result;
+            return result?.ToUnixTimeSeconds();
         }
     }
 }
