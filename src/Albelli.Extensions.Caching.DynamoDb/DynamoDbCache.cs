@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 
 namespace Albelli.Extensions.Caching.DynamoDb
 {
@@ -15,9 +16,9 @@ namespace Albelli.Extensions.Caching.DynamoDb
         private readonly IAmazonDynamoDB _dynamoDb;
         private readonly ISystemClock _systemClock;
 
-        public DynamoDbCache(DynamoDbCacheOptions options, ISystemClock systemClock, IAmazonDynamoDB dynamoDb = null)
+        public DynamoDbCache(IOptions<DynamoDbCacheOptions> options, ISystemClock systemClock, IAmazonDynamoDB dynamoDb = null)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             if (_options.CustomDynamoDbClient != null)
             {
                 _dynamoDb = _options.CustomDynamoDbClient;

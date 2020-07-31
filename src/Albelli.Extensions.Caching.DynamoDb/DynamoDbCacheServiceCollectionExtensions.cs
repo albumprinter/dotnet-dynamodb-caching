@@ -6,7 +6,14 @@ namespace Albelli.Extensions.Caching.DynamoDb
 {
     public static class DynamoDbCacheServiceCollectionExtensions
     {
-        public static IServiceCollection AddStackExchangeRedisCache(this IServiceCollection services, Action<DynamoDbCacheOptions> setupAction)
+        /// <summary>
+        /// Use DynamoDb as a provider for the IDistributedCache.
+        /// </summary>
+        /// <param name="services">The service collection to add this to.</param>
+        /// <param name="setupAction">The configuration object for this implementation.</param>
+        /// <returns>A chain result with the same service collection.</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static IServiceCollection AddDynamoDbCache(this IServiceCollection services, Action<DynamoDbCacheOptions> setupAction)
         {
             if (services == null)
             {
