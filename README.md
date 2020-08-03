@@ -1,7 +1,32 @@
+
 # Albelli.Extensions.Caching.DynamoDb
 This library offers an implementation of IDistributedCache with a DynamoDb back-end.
 It makes use of the TTL functionality to get remove the stale cache keys.
 IDistributedCache is a low-level interface used by cache-related consumers, such as Polly. Microsoft also provides a set of extension methods that simplify common workflows.
+
+## Usage
+First, install the package through NuGet
+
+    Install-Package Albelli.Extensions.Caching.DynamoDb
+Then you can inject it through Microsoft's DI container. Example:
+
+    services.AddDynamoDbCache(  
+    o =>  
+    {  
+        o.TableName = "CustomerSubscriptions-Caching";  
+    });
+ That's it! This will be injected as a singleton. Afterwards, you have access to the IDistributedCache in your application.
+ Bear in mind, this has a dependency on AmazonDynamoDBClient client.
+ You can either make sure it's injected in the DI engine or use:
+ 
+
+    services.AddDynamoDbCache(  
+    o =>  
+    {  
+        ... 
+        o.CustomDynamoDbClient = new AmazonDynamoDBClient();  
+        ...
+    });
 
 ## Considerations
  - There is no optimistic locking(or locking of any kind). If this is a big problem, using a different provider(such as Redis with WATCH) might be better for your use case.
@@ -17,3 +42,4 @@ IDistributedCache is a low-level interface used by cache-related consumers, such
  - The library is still **quite raw**. Any pull requests, ideas and feedback are encouraged.
 
  
+
