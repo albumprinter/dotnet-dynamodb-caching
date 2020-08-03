@@ -13,7 +13,9 @@ Then you can inject it through Microsoft's DI container. Example:
     services.AddDynamoDbCache(  
     o =>  
     {  
-        o.TableName = "CustomerSubscriptions-Caching";  
+        o.TableName = "CustomerSubscriptions-Caching";  //The name of the DynamoDb table where the caching resides
+        o.KeyColumnName = "key"; //This will be the partition key of your table. Make sure it has the same name in your infra code.
+        o.TimeToLiveColumnName = "ttl_value"; //This will be the TTL column of your table. Make sure the TTL functionality is enabled and points to this exact same attribute name.
     });
  That's it! This will be injected as a singleton. Afterwards, you have access to the IDistributedCache in your application.
  Bear in mind, this has a dependency on AmazonDynamoDBClient client.
