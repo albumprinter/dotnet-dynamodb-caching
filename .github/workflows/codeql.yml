@@ -62,12 +62,7 @@ jobs:
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
 
-    - name: Add NuGet Feed
-      run: dotnet nuget add source ${{ secrets.ARTIFACTORY_FEED_URL }} --username ${{ secrets.ARTIFACTORY_USERNAME }} --password ${{ secrets.ARTIFACTORY_USER_PASSWORD }} --store-password-in-clear-text
-
     - name: Restore Project Dependencies
-      env:
-        nuget_feed_source: ${{ secrets.ARTIFACTORY_FEED_URL }}
       run: |
         if [ -e *.sln ]; then
           dotnet restore
